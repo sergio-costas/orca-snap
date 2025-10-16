@@ -35,6 +35,13 @@ apps:
     slots:
       - dbus-gnome
 
+  speech-dispatcher:
+    extensions: [gnome]
+    command: scripts/launch-speech-dispatcher.sh
+    plugs:
+      - audio-playback
+      - accessibility
+
 parts:
   orca:
     source: https://gitlab.gnome.org/GNOME/orca.git
@@ -46,7 +53,6 @@ parts:
       - -Doptimization=3
       - -Ddebug=true
     stage-packages:
-      - pkg-config
       - x11-xkb-utils
       - python3-speechd
       - python3-brlapi
@@ -54,12 +60,19 @@ parts:
       craftctl default
       patch -p1 < $CRAFT_PROJECT_DIR/patches/remove-check.diff
     override-build: |
-      echo $PKG_CONFIG_PATH
-      PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig:${PKG_CONFIG_PATH}
       python3 -m pip install dasbus louis --target $CRAFT_PART_INSTALL/usr/lib/python3/dist-packages
       PYTHONPATH=${PYTHONPATH:+$PYTHONPATH:}$CRAFT_PART_INSTALL/usr/lib/python3/dist-packages
       craftctl default
       $CRAFT_PROJECT_DIR/tools/set_python_runtime.py $CRAFT_PART_INSTALL
+
+  speech-dispatcher:
+    plugin: nil
+    stage-packages:
+      - speech-dispatcher
+      - speech-dispatcher-audio-plugins
+      - speech-dispatcher-espeak-ng
+      - libaudio2
+      - libsndio7.0
 
     override-stage: |
       mkdir -p $CRAFT_PRIME/scripts
