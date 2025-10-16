@@ -1,0 +1,68 @@
+name: orca
+base: core24
+version: '0.1'
+summary: The Orca screen reader
+description: |
+  This is the Orca Screen Reader for Gnome systems.
+
+grade: devel # must be 'stable' to release into candidate/stable channels
+confinement: strict # use 'strict' once you have the right plugs and slots
+
+slots:
+  dbus-gnome:
+    interface: dbus
+    bus: session
+    name: org.gnome.Orca.Service
+
+layout:
+  /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/speech-dispatcher-modules:
+    bind: $SNAP/usr/lib/speech-dispatcher-modules
+  /usr/lib/speech-dispatcher-modules:
+    bind: $SNAP/usr/lib/speech-dispatcher-modules
+  /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/speech-dispatcher:
+    bind: $SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/speech-dispatcher
+  /usr/lib/x86_64-linux-gnu/espeak-ng-data:
+    bind: $SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/espeak-ng-data
+
+apps:
+  orca:
+    extensions: [gnome]
+    command: scripts/launch-orca.sh
+    environment:
+      PYTHONPATH: $SNAP/usr/lib/python3/dist-packages:/usr/lib/python3.12/lib-dynload
+    plugs:
+      - accessibility
+    slots:
+      - dbus-gnome
+
+parts:
+  orca:
+    source: https://gitlab.gnome.org/GNOME/orca.git
+    source-tag: '49.4'
+    source-depth: 1
+    plugin: meson
+    meson-parameters:
+      - --prefix=/usr
+      - -Doptimization=3
+      - -Ddebug=true
+    stage-packages:
+      - pkg-config
+      - x11-xkb-utils
+      - python3-speechd
+      - python3-brlapi
+    override-pull: |
+      craftctl default
+      patch -p1 < $CRAFT_PROJECT_DIR/patches/remove-check.diff
+    override-build: |
+      echo $PKG_CONFIG_PATH
+      PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig:${PKG_CONFIG_PATH}
+      python3 -m pip install dasbus louis --target $CRAFT_PART_INSTALL/usr/lib/python3/dist-packages
+      PYTHONPATH=${PYTHONPATH:+$PYTHONPATH:}$CRAFT_PART_INSTALL/usr/lib/python3/dist-packages
+      craftctl default
+      $CRAFT_PROJECT_DIR/tools/set_python_runtime.py $CRAFT_PART_INSTALL
+
+    override-stage: |
+      mkdir -p $CRAFT_PRIME/scripts
+      cp -a $CRAFT_PROJECT_DIR/scripts/* $CRAFT_PRIME/scripts/
+      chmod 755 $CRAFT_PRIME/scripts/*
+      craftctl default
