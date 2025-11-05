@@ -30,16 +30,16 @@ apps:
     command: scripts/launch-orca.sh
     environment:
       PYTHONPATH: $SNAP/usr/lib/python3/dist-packages:/usr/lib/python3.12/lib-dynload
-    plugs:
-      - accessibility
     slots:
       - dbus-gnome
+      - accessibility
 
   speech-dispatcher:
     extensions: [gnome]
     command: scripts/launch-speech-dispatcher.sh
     plugs:
       - audio-playback
+    slots:
       - accessibility
 
 parts:
