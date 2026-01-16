@@ -45,7 +45,7 @@ apps:
 parts:
   orca:
     source: https://gitlab.gnome.org/GNOME/orca.git
-    source-tag: '49.4'
+    source-tag: '49.5'
     source-depth: 1
     plugin: meson
     meson-parameters:
