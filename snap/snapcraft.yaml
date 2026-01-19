@@ -33,12 +33,18 @@ apps:
     slots:
       - dbus-gnome
       - accessibility
+    plugs:
+      - network
 
   speech-dispatcher:
     extensions: [gnome]
     command: scripts/launch-speech-dispatcher.sh
+    daemon: simple
+    daemon-scope: user
+    restart-delay: 1s
     plugs:
       - audio-playback
+      - network
     slots:
       - accessibility
 
@@ -73,9 +79,12 @@ parts:
       - speech-dispatcher-espeak-ng
       - libaudio2
       - libsndio7.0
-
+      - libdotconf0
+      - sndfile-tools
+      - libsndfile1
     override-stage: |
       mkdir -p $CRAFT_PRIME/scripts
       cp -a $CRAFT_PROJECT_DIR/scripts/* $CRAFT_PRIME/scripts/
       chmod 755 $CRAFT_PRIME/scripts/*
+      sed -i -e 's/#AddModule "espeak-ng"/AddModule "espeak-ng"/g' $CRAFT_PART_INSTALL/etc/speech-dispatcher/speechd.conf
       craftctl default
